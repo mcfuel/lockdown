@@ -1,7 +1,7 @@
-# 3GPP_related
-3GPP related projects and tools
 
 cause_distribute.py:
+
+Parse cause value from 3GPP specs. 5G SA/NSA related protocols. 
 
 Usage:
 
