@@ -7,6 +7,8 @@ import os
 import wget
 import re
 
+
+#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
 from openpyxl.styles import Alignment
 from openpyxl.styles import PatternFill
 from zipfile import ZipFile
@@ -15,13 +17,8 @@ from win32com import client as wc
 group = {"Radio Network Layer cause":"Radio Network Layer", "Transport Layer cause":"Transport Layer", "Protocol cause":"Protocol", "Miscellaneous cause":"Misc", "Transport Network Layer cause":"Transport Layer", "NAS cause":"NAS"}
 excel_sheet_name="Cause Enumerations"
 
-protocol = {("NGAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.413/38413-g90.zip"),
-           ("XnAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.423/38423-g90.zip"),
-           ("E1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.463/38463-g90.zip"),
-           ("F1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.473/38473-g90.zip"),
-           ("X2AP","https://www.3gpp.org/ftp/Specs/archive/36_series/36.423/36423-g90.zip"),
-           ("RRC", "https://www.3gpp.org/ftp/Specs/archive/38_series/38.331/38331-g80.zip")
-}
+protocol = {}
+
 
 protocol_col = 'A'
 group_col = 'B'
@@ -148,14 +145,24 @@ def parse_rrc(file_name):
         cause_pair.append((current_protocol, "RRC Resume", cause.strip().removesuffix("}")))
 
 def main():
-
     global current_protocol
+    global protocol
+    if len(sys.argv) != 3:
+        print("Usage: cause_distribute.py <excel file> <3GPP_release_version>")
+        exit(1)
+    protocol = {("NGAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.413/38413-"+sys.argv[2]+"90.zip"),
+           ("XnAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.423/38423-"+sys.argv[2]+"90.zip"),
+           ("E1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.463/38463-"+sys.argv[2]+"90.zip"),
+           ("F1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.473/38473-"+sys.argv[2]+"90.zip"),
+           ("X2AP","https://www.3gpp.org/ftp/Specs/archive/36_series/36.423/36423-"+sys.argv[2]+"90.zip"),
+           ("RRC", "https://www.3gpp.org/ftp/Specs/archive/38_series/38.331/38331-"+sys.argv[2]+"80.zip")
+    }
 
     wb = openpyxl.load_workbook(sys.argv[1])
     new_sheet = wb.create_sheet(title = excel_sheet_name)
 
     for p in protocol:
-        #download_spec(p[1])
+        download_spec(p[1])
         spec_name = p[1].split("/")[-1]
         with ZipFile(spec_name, 'r') as zipObj:
             zipObj.extractall()
