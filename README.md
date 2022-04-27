@@ -5,4 +5,4 @@ Parse cause value from 3GPP specs to a excel files. 5G SA/NSA related protocols.
 
 Usage:
 
-     cause_distribute.py <excel file>
+     cause_distribute.py <excel file> <3GPP_release_version>
