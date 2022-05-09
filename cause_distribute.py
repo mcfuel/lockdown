@@ -8,7 +8,7 @@ import wget
 import re
 
 
-#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
+
 from openpyxl.styles import Alignment
 from openpyxl.styles import PatternFill
 from zipfile import ZipFile
@@ -159,8 +159,9 @@ def main():
     }
 
     wb = openpyxl.load_workbook(sys.argv[1])
-    new_sheet = wb.create_sheet(title = excel_sheet_name)
-
+    new_sheet = wb.create_sheet(title = excel_sheet_name + "1")
+    old_sheet = wb[excel_sheet_name]
+ 
     for p in protocol:
         download_spec(p[1])
         spec_name = p[1].split("/")[-1]
@@ -177,6 +178,8 @@ def main():
         put_to_excel(new_sheet)
     #save excel
     fill_misc(new_sheet)
+    wb.remove(old_sheet)
+    new_sheet.title = excel_sheet_name
     wb.save(sys.argv[1])
     wb.close()
 
