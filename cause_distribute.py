@@ -26,6 +26,7 @@ code_col = 'C'
 descripiton_col = 'D'
 
 cause_pair = []
+rrc_est_pair = []
 
 current_protocol = ""
 
@@ -43,6 +44,9 @@ def find_cause_tbl(file_name):
                 save_cause(tbl.cell(0,0).paragraphs[0].text, tbl)
         except:
             print("parse {} exception".format(tbl))
+    if "38413" in file_name: #ngap there is rrc cause
+        for rrc_pair in rrc_est_pair:
+            cause_pair.append((rrc_pair[0], rrc_pair[1], rrc_pair[2]))
 
 def fill_misc(sheet):
     #title
@@ -139,6 +143,7 @@ def parse_rrc(file_name):
         cause_pair.append((current_protocol, "RRC RLF", cause.strip().removesuffix("}"))) 
     for cause in re.search("EstablishmentCause ::=.*?}",all_para, re.MULTILINE).group().split("{")[-1].split(","):
         cause_pair.append((current_protocol, "RRC Establishment", cause.strip().removesuffix("}")))
+        rrc_est_pair.append(("NGAP", "RRC Establishment", cause.strip().removesuffix("}")))#for appending to ngap part 
     for cause in re.search("ReestablishmentCause ::=.*?}",all_para, re.MULTILINE).group().split("{")[-1].split(","):
         cause_pair.append((current_protocol, "RRC Reestablishment", cause.strip().removesuffix("}")))
     for cause in re.search("ResumeCause ::=.*?}",all_para, re.MULTILINE).group().split("{")[-1].split(","):
@@ -150,19 +155,20 @@ def main():
     if len(sys.argv) != 3:
         print("Usage: cause_distribute.py <excel file> <3GPP_release_version>")
         exit(1)
-    protocol = {("NGAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.413/38413-"+sys.argv[2]+"90.zip"),
-           ("XnAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.423/38423-"+sys.argv[2]+"90.zip"),
-           ("E1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.463/38463-"+sys.argv[2]+"90.zip"),
-           ("F1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.473/38473-"+sys.argv[2]+"90.zip"),
-           ("X2AP","https://www.3gpp.org/ftp/Specs/archive/36_series/36.423/36423-"+sys.argv[2]+"90.zip"),
-           ("RRC", "https://www.3gpp.org/ftp/Specs/archive/38_series/38.331/38331-"+sys.argv[2]+"80.zip")
+    protocol = { 
+           ("RRC", "https://www.3gpp.org/ftp/Specs/archive/38_series/38.331/38331-"+sys.argv[2]+".zip"),
+           ("XnAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.423/38423-"+sys.argv[2]+".zip"),
+           ("E1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.463/37483-"+sys.argv[2]+".zip"),
+           ("F1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.473/38473-"+sys.argv[2]+".zip"),
+           ("X2AP","https://www.3gpp.org/ftp/Specs/archive/36_series/36.423/36423-"+sys.argv[2]+".zip"),
+           ("NGAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.413/38413-"+sys.argv[2]+".zip")
     }
 
     wb = openpyxl.load_workbook(sys.argv[1])
     new_sheet = wb.create_sheet(title = excel_sheet_name + "1")
     old_sheet = wb[excel_sheet_name]
  
-    for p in protocol:
+    for p in sorted(protocol, reverse=True):
         download_spec(p[1])
         spec_name = p[1].split("/")[-1]
         with ZipFile(spec_name, 'r') as zipObj:
