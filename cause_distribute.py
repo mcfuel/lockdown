@@ -148,29 +148,42 @@ def parse_rrc(file_name):
         cause_pair.append((current_protocol, "RRC Reestablishment", cause.strip().removesuffix("}")))
     for cause in re.search("ResumeCause ::=.*?}",all_para, re.MULTILINE).group().split("{")[-1].split(","):
         cause_pair.append((current_protocol, "RRC Resume", cause.strip().removesuffix("}")))
+    for cause in re.search("FailureReportSCG ::=.*?}",all_para, re.MULTILINE).group().split("{")[-1].split(","):
+        cause_pair.append((current_protocol, "ScgFailureType", cause.strip().removesuffix("}")))
+    for cause in re.search("failureType-v1610.*?}",all_para, re.MULTILINE).group().split("{")[-1].split(","):
+        cause_pair.append((current_protocol, "ScgFailureType-v1610", cause.strip().removesuffix("}")))
 
 def main():
     global current_protocol
     global protocol
-    if len(sys.argv) != 3:
-        print("Usage: cause_distribute.py <excel file> <3GPP_release_version>")
+    if len(sys.argv) < 3:
+        print("Usage: cause_distribute.py <excel file> <3GPP_release_version> [S1AP]")
         exit(1)
     protocol = { 
            ("RRC", "https://www.3gpp.org/ftp/Specs/archive/38_series/38.331/38331-"+sys.argv[2]+".zip"),
            ("XnAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.423/38423-"+sys.argv[2]+".zip"),
-           ("E1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.463/37483-"+sys.argv[2]+".zip"),
+           ("E1AP","https://www.3gpp.org/ftp/Specs/archive/37_series/37.483/37483-"+sys.argv[2]+".zip"),
            ("F1AP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.473/38473-"+sys.argv[2]+".zip"),
            ("X2AP","https://www.3gpp.org/ftp/Specs/archive/36_series/36.423/36423-"+sys.argv[2]+".zip"),
            ("NGAP","https://www.3gpp.org/ftp/Specs/archive/38_series/38.413/38413-"+sys.argv[2]+".zip")
     }
+
+    if len(sys.argv) == 4 and sys.argv[3].upper() == "S1AP":
+        protocol.add(("S1AP","https://www.3gpp.org/ftp/Specs/archive/36_series/36.413/36413-"+sys.argv[2]+".zip"))
+        print("S1AP cause code enabled")
+    else:
+        if len(sys.argv) >= 4:
+            print("Usage: cause_distribute.py <excel file> <3GPP_release_version> [S1AP]")
+            exit(1)
 
     wb = openpyxl.load_workbook(sys.argv[1])
     new_sheet = wb.create_sheet(title = excel_sheet_name + "1")
     old_sheet = wb[excel_sheet_name]
  
     for p in sorted(protocol, reverse=True):
-        download_spec(p[1])
         spec_name = p[1].split("/")[-1]
+        if not os.path.exists(spec_name):
+            download_spec(p[1])
         with ZipFile(spec_name, 'r') as zipObj:
             zipObj.extractall()
         current_protocol = p[0]
